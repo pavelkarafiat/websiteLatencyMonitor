@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Web Latency Report</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #eee; padding: 2em; }
+    table { width: 100%; margin-top: 1em; border-collapse: collapse; }
+    th, td { border: 1px solid #333; padding: 0.4em 0.8em; text-align: left; }
+    h2 { margin-top: 2em; color: #ccc; }
+    .bad { color: #f55; }
+    .ok { color: #4f4; }
+  </style>
+</head>
+<body>
+  <h1>Web Latency Report</h1>
+  <h2>https://dev.qarta.cz/</h2>
+<table>
+<thead><tr><th>Čas</th><th>TTFB (ms)</th></tr></thead>
+<tbody>
+<tr><td>2025-07-31 13:23:03</td><td class='ok'>784</td></tr>
+</tbody>
+</table>
+
+<h2>https://dev.qarta.cz/kontakt</h2>
+<table>
+<thead><tr><th>Čas</th><th>TTFB (ms)</th></tr></thead>
+<tbody>
+<tr><td>2025-07-31 13:23:07</td><td class='bad'>4131</td></tr>
+</tbody>
+</table>
+
+<h2>https://qarta-speed.tomaskorinek.com/</h2>
+<table>
+<thead><tr><th>Čas</th><th>TTFB (ms)</th></tr></thead>
+<tbody>
+<tr><td>2025-07-31 13:23:08</td><td class='ok'>810</td></tr>
+</tbody>
+</table>
+
+
+</body>
+</html>
