@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  monitor: # Přejmenováno pro srozumitelnost
     runs-on: ubuntu-latest
 
     steps:
@@ -21,9 +21,10 @@ jobs:
       - name: Run latency test
         run: php scripts/test_latency.php
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      # TOTO JE NOVÝ KROK MÍSTO DEPLOYE
+      - name: Commit and push latency logs
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          github_token: ${{ secrets.K_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./
+          commit_message: "📈 Update latency logs"
+          # Ujisti se, že cesty odpovídají tomu, kam skript ukládá soubory
+          file_pattern: "latency_logs/*.csv index.html"
