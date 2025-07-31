@@ -35,8 +35,11 @@ foreach ($urls as $url) {
         $ttfb,
     ];
 
-    // Název souboru pro danou URL (bez speciálních znaků)
-    $fileName = preg_replace('/[^a-z0-9]+/i', '_', parse_url($url, PHP_URL_HOST)) . '.csv';
+    // Lepší generování názvu souboru (host + path)
+    $parsedUrl = parse_url($url);
+    $host = $parsedUrl['host'] ?? 'unknown';
+    $path = $parsedUrl['path'] ?? '';
+    $fileName = preg_replace('/[^a-z0-9]+/i', '_', $host . $path) . '.csv';
     $dataFile = $dataDir . '/' . $fileName;
 
     // Přidání záznamu
@@ -55,6 +58,7 @@ foreach ($urls as $url) {
 
     $allData[$url] = array_reverse($data); // nejnovější nahoře
 }
+
 
 // Generuj HTML
 $template = file_get_contents($templateFile);
