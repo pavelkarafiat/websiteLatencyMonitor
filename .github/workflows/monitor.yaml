@@ -28,3 +28,4 @@ jobs:
           commit_message: "📈 Update latency logs"
           # Ujisti se, že cesty odpovídají tomu, kam skript ukládá soubory
           file_pattern: "latency_logs/*.csv index.html"
+          github_token: ${{ secrets.K_TOKEN }}
