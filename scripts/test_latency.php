@@ -17,7 +17,21 @@ if (!is_dir($dataDir)) {
 
 $allData = [];
 
-foreach ($urls as $url) {
+foreach ($urls as $index => $url) {
+    // Statický název souboru podle pořadí URL
+    $fileName = "url" . ($index + 1) . ".csv";
+    $dataFile = $dataDir . '/' . $fileName;
+
+    // Načti existující data
+    $data = [];
+    if (file_exists($dataFile) && ($handle = fopen($dataFile, 'r')) !== false) {
+        while (($row = fgetcsv($handle)) !== false) {
+            $data[] = $row;
+        }
+        fclose($handle);
+    }
+
+    // Vytvoř nový záznam
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -35,32 +49,24 @@ foreach ($urls as $url) {
         $ttfb,
     ];
 
-    // Lepší generování názvu souboru (host + path)
-    $parsedUrl = parse_url($url);
-    $host = $parsedUrl['host'] ?? 'unknown';
-    $path = rtrim($parsedUrl['path'] ?? '', '/');
-    if ($path === '') {
-    $path = '_root';
-    }
-    $fileName = preg_replace('/[^a-z0-9]+/i', '_', $host . $path) . '.csv';
-    $dataFile = $dataDir . '/' . $fileName;
+    // Přidej nový záznam do paměti
+    $data[] = $entry;
 
-    // Přidání záznamu
-    $handle = fopen($dataFile, 'a');
-    fputcsv($handle, $entry);
+    // Případné omezení na posledních N záznamů
+    $maxRows = 100;
+    $data = array_slice($data, -$maxRows);
+
+    // Ulož zpět do CSV
+    $handle = fopen($dataFile, 'w');
+    foreach ($data as $row) {
+        fputcsv($handle, $row);
+    }
     fclose($handle);
 
-    // Načti data pro tabulku
-    $data = [];
-    if (($handle = fopen($dataFile, 'r')) !== false) {
-        while (($row = fgetcsv($handle)) !== false) {
-            $data[] = $row;
-        }
-        fclose($handle);
-    }
-
-    $allData[$url] = array_reverse($data); // nejnovější nahoře
+    // Zaznamenej pro HTML výstup
+    $allData[$url] = array_reverse($data); // pro HTML: nejnovější nahoře
 }
+
 
 
 // Generuj HTML
