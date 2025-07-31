@@ -4,7 +4,7 @@ date_default_timezone_set('Europe/Prague');
 $urls = [
     'https://dev.qarta.cz/',
     'https://dev.qarta.cz/kontakt',
-    'https://qarta-speed.tomaskorinek.com/',
+    'https://qarta-speed.tomaskorinek.com/kontakt',
 ];
 
 $dataDir = __DIR__ . '/../latency_logs';
