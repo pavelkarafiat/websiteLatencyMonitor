@@ -1,62 +1,83 @@
 <?php
 date_default_timezone_set('Europe/Prague');
 
-$url = 'https://dev.qarta.cz/';
-$dataFile = __DIR__ . '/../latency_data.csv';
+$urls = [
+    'https://dev.qarta.cz/',
+    'https://dev.qarta.cz/kontakt',
+    'https://qarta-speed.tomaskorinek.com/',
+];
+
+$dataDir = __DIR__ . '/../latency_logs';
 $templateFile = __DIR__ . '/template.html';
 $outputHtml = __DIR__ . '/../index.html';
 
-// Latency test
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HEADER => true,
-    CURLOPT_NOBODY => true,
-    CURLOPT_TIMEOUT => 30,
-]);
-curl_exec($ch);
-$info = curl_getinfo($ch);
-curl_close($ch);
+if (!is_dir($dataDir)) {
+    mkdir($dataDir, 0777, true);
+}
 
-$entry = [
-    date('Y-m-d H:i:s'),
-    $info['http_code'] ?? 0,
-    round(($info['starttransfer_time'] ?? 0) * 1000),
-    round(($info['total_time'] ?? 0) * 1000),
-];
+$allData = [];
 
-// Přidání záznamu (append)
-$handle = fopen($dataFile, 'a');
-fputcsv($handle, $entry);
-fclose($handle);
+foreach ($urls as $url) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => true,
+        CURLOPT_NOBODY => true,
+        CURLOPT_TIMEOUT => 30,
+    ]);
+    curl_exec($ch);
+    $info = curl_getinfo($ch);
+    curl_close($ch);
 
-// Načti všechna data pro generování HTML
-$data = [];
-if (($handle = fopen($dataFile, 'r')) !== false) {
-    while (($row = fgetcsv($handle)) !== false) {
-        $data[] = $row;
-    }
+    $ttfb = round(($info['starttransfer_time'] ?? 0) * 1000);
+    $entry = [
+        date('Y-m-d H:i:s'),
+        $ttfb,
+    ];
+
+    // Název souboru pro danou URL (bez speciálních znaků)
+    $fileName = preg_replace('/[^a-z0-9]+/i', '_', parse_url($url, PHP_URL_HOST)) . '.csv';
+    $dataFile = $dataDir . '/' . $fileName;
+
+    // Přidání záznamu
+    $handle = fopen($dataFile, 'a');
+    fputcsv($handle, $entry);
     fclose($handle);
+
+    // Načti data pro tabulku
+    $data = [];
+    if (($handle = fopen($dataFile, 'r')) !== false) {
+        while (($row = fgetcsv($handle)) !== false) {
+            $data[] = $row;
+        }
+        fclose($handle);
+    }
+
+    $allData[$url] = array_reverse($data); // nejnovější nahoře
 }
 
 // Generuj HTML
 $template = file_get_contents($templateFile);
-$rowsHtml = '';
-foreach (array_reverse($data) as $row) {
-    $datetime = htmlspecialchars($row[0]);
-    $http_code = (int)$row[1];
-    $ttfb_ms = (int)$row[2];
-    $total_time_ms = (int)$row[3];
-    $rowsHtml .= sprintf(
-        "<tr><td>%s</td><td>%d</td><td class='%s'>%d</td><td class='%s'>%d</td></tr>\n",
-        $datetime,
-        $http_code,
-        $ttfb_ms > 1000 ? 'bad' : 'ok',
-        $ttfb_ms,
-        $total_time_ms > 3000 ? 'bad' : 'ok',
-        $total_time_ms
-    );
+$tablesHtml = '';
+
+foreach ($allData as $url => $rows) {
+    $rowsHtml = '';
+    foreach ($rows as $row) {
+        $datetime = htmlspecialchars($row[0]);
+        $ttfb_ms = (int)$row[1];
+        $rowsHtml .= sprintf(
+            "<tr><td>%s</td><td class='%s'>%d</td></tr>\n",
+            $datetime,
+            $ttfb_ms > 1000 ? 'bad' : 'ok',
+            $ttfb_ms
+        );
+    }
+
+    $tablesHtml .= "<h2>$url</h2>\n";
+    $tablesHtml .= "<table>\n<thead><tr><th>Čas</th><th>TTFB (ms)</th></tr></thead>\n<tbody>\n";
+    $tablesHtml .= $rowsHtml;
+    $tablesHtml .= "</tbody>\n</table>\n\n";
 }
 
-$html = str_replace('<!--DATA-->', $rowsHtml, $template);
+$html = str_replace('<!--TABLES-->', $tablesHtml, $template);
 file_put_contents($outputHtml, $html);
