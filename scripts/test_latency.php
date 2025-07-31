@@ -38,7 +38,10 @@ foreach ($urls as $url) {
     // Lepší generování názvu souboru (host + path)
     $parsedUrl = parse_url($url);
     $host = $parsedUrl['host'] ?? 'unknown';
-    $path = $parsedUrl['path'] ?? '';
+    $path = rtrim($parsedUrl['path'] ?? '', '/');
+    if ($path === '') {
+    $path = '_root';
+    }
     $fileName = preg_replace('/[^a-z0-9]+/i', '_', $host . $path) . '.csv';
     $dataFile = $dataDir . '/' . $fileName;
 
